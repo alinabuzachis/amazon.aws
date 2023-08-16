@@ -10,6 +10,9 @@ pytest-mock
 pytest-xdist
 pytest-ansible
 
+Cython==0.29.36, --no-build-isolation
+pyyaml==5.4.1, --no-build-isolation
+
 # Needed for ansible.utils.ipaddr in tests
 netaddr
 # Sometimes needed where we don't have features we need in modules
