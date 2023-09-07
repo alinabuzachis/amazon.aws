@@ -101,6 +101,8 @@ action_groups:
   - s3_bucket
   - s3_object
   - s3_object_info
+  - iam_role
+  - iam_role_info
 plugin_routing:
   action:
     aws_s3:
