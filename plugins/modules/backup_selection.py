@@ -343,7 +343,7 @@ def main():
         if resources:
             backup_selection_data["Resources"] = resources
         if list_of_tags:
-            backup_selection_data["ListOfTags"] = snake_dict_to_camel_dict(list_of_tags, capitalize_first=True)
+            backup_selection_data["ListOfTags"] = [snake_dict_to_camel_dict(tags, capitalize_first=True) for tags in list_of_tags]
         if not_resources:
             backup_selection_data["NotResources"] = not_resources
         if conditions:

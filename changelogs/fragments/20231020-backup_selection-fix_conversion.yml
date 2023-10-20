@@ -1,0 +1,2 @@
+bugfixes:
+  - backup_selection - Ensure that snake_dict_to_camel_dict is applied each element of list_of_tags.
