@@ -226,7 +226,7 @@ class CloudWatchEventRule:
         self.module = module
 
     def describe(self):
-        """Returns the existing details of the rule in AWS"""
+        """Returns the existing details of the rule in AWS."""
         try:
             rule_info = self.client.describe_rule(Name=self.name)
         except is_boto3_error_code("ResourceNotFoundException"):
@@ -239,7 +239,7 @@ class CloudWatchEventRule:
         return camel_dict_to_snake_dict(rule_info)
 
     def put(self, enabled=True):
-        """Creates or updates the rule in AWS"""
+        """Creates or updates the rule in AWS."""
         request = {
             "Name": self.name,
             "State": "ENABLED" if enabled else "DISABLED",
@@ -260,7 +260,7 @@ class CloudWatchEventRule:
         return response
 
     def delete(self):
-        """Deletes the rule in AWS"""
+        """Deletes the rule in AWS."""
         self.remove_all_targets()
 
         try:
@@ -271,7 +271,7 @@ class CloudWatchEventRule:
         return response
 
     def enable(self):
-        """Enables the rule in AWS"""
+        """Enables the rule in AWS."""
         try:
             response = self.client.enable_rule(Name=self.name)
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
@@ -280,7 +280,7 @@ class CloudWatchEventRule:
         return response
 
     def disable(self):
-        """Disables the rule in AWS"""
+        """Disables the rule in AWS."""
         try:
             response = self.client.disable_rule(Name=self.name)
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
@@ -289,7 +289,7 @@ class CloudWatchEventRule:
         return response
 
     def list_targets(self):
-        """Lists the existing targets for the rule in AWS"""
+        """Lists the existing targets for the rule in AWS."""
         try:
             targets = self.client.list_targets_by_rule(Rule=self.name)
         except is_boto3_error_code("ResourceNotFoundException"):
@@ -302,7 +302,7 @@ class CloudWatchEventRule:
         return camel_dict_to_snake_dict(targets)["targets"]
 
     def put_targets(self, targets):
-        """Creates or updates the provided targets on the rule in AWS"""
+        """Creates or updates the provided targets on the rule in AWS."""
         if not targets:
             return
         request = {
@@ -317,7 +317,7 @@ class CloudWatchEventRule:
         return response
 
     def remove_targets(self, target_ids):
-        """Removes the provided targets from the rule in AWS"""
+        """Removes the provided targets from the rule in AWS."""
         if not target_ids:
             return
         request = {"Rule": self.name, "Ids": target_ids}
@@ -329,12 +329,12 @@ class CloudWatchEventRule:
         return response
 
     def remove_all_targets(self):
-        """Removes all targets on rule"""
+        """Removes all targets on rule."""
         targets = self.list_targets()
         return self.remove_targets([t["id"] for t in targets])
 
     def _targets_request(self, targets):
-        """Formats each target for the request"""
+        """Formats each target for the request."""
         targets_request = []
         for target in targets:
             target_request = scrub_none_parameters(snake_dict_to_camel_dict(target, True))
@@ -359,7 +359,7 @@ class CloudWatchEventRuleManager:
         self.targets = targets
 
     def ensure_present(self, enabled=True):
-        """Ensures the rule and targets are present and synced"""
+        """Ensures the rule and targets are present and synced."""
         rule_description = self.rule.describe()
         if rule_description:
             # Rule exists so update rule, targets and state
@@ -371,11 +371,11 @@ class CloudWatchEventRuleManager:
             self._create(enabled)
 
     def ensure_disabled(self):
-        """Ensures the rule and targets are present, but disabled, and synced"""
+        """Ensures the rule and targets are present, but disabled, and synced."""
         self.ensure_present(enabled=False)
 
     def ensure_absent(self):
-        """Ensures the rule and targets are absent"""
+        """Ensures the rule and targets are absent."""
         rule_description = self.rule.describe()
         if not rule_description:
             # Rule doesn't exist so don't need to delete
@@ -383,7 +383,7 @@ class CloudWatchEventRuleManager:
         self.rule.delete()
 
     def fetch_aws_state(self):
-        """Retrieves rule and target state from AWS"""
+        """Retrieves rule and target state from AWS."""
         aws_state = {"rule": {}, "targets": [], "changed": self.rule.changed}
         rule_description = self.rule.describe()
         if not rule_description:
@@ -397,12 +397,12 @@ class CloudWatchEventRuleManager:
         return aws_state
 
     def _sync_rule(self, enabled=True):
-        """Syncs local rule state with AWS"""
+        """Syncs local rule state with AWS."""
         if not self._rule_matches_aws():
             self.rule.put(enabled)
 
     def _sync_targets(self):
-        """Syncs local targets with AWS"""
+        """Syncs local targets with AWS."""
         # Identify and remove extraneous targets on AWS
         target_ids_to_remove = self._remote_target_ids_to_remove()
         if target_ids_to_remove:
@@ -414,7 +414,7 @@ class CloudWatchEventRuleManager:
             self.rule.put_targets(targets_to_put)
 
     def _sync_state(self, enabled=True):
-        """Syncs local rule state with AWS"""
+        """Syncs local rule state with AWS."""
         remote_state = self._remote_state()
         if enabled and remote_state != "ENABLED":
             self.rule.enable()
@@ -422,12 +422,12 @@ class CloudWatchEventRuleManager:
             self.rule.disable()
 
     def _create(self, enabled=True):
-        """Creates rule and targets on AWS"""
+        """Creates rule and targets on AWS."""
         self.rule.put(enabled)
         self.rule.put_targets(self.targets)
 
     def _rule_matches_aws(self):
-        """Checks if the local rule data matches AWS"""
+        """Checks if the local rule data matches AWS."""
         aws_rule_data = self.rule.describe()
 
         # The rule matches AWS only if all rule data fields are equal
@@ -435,7 +435,7 @@ class CloudWatchEventRuleManager:
         return all(getattr(self.rule, field) == aws_rule_data.get(field, None) for field in self.RULE_FIELDS)
 
     def _targets_to_put(self):
-        """Returns a list of targets that need to be updated or added remotely"""
+        """Returns a list of targets that need to be updated or added remotely."""
         remote_targets = self.rule.list_targets()
 
         # keys with none values must be scrubbed off of self.targets
@@ -459,13 +459,13 @@ class CloudWatchEventRuleManager:
         return [t for t in self.targets if camel_dict_to_snake_dict(t) not in remote_targets]
 
     def _remote_target_ids_to_remove(self):
-        """Returns a list of targets that need to be removed remotely"""
+        """Returns a list of targets that need to be removed remotely."""
         target_ids = [t["id"] for t in self.targets]
         remote_targets = self.rule.list_targets()
         return [rt["id"] for rt in remote_targets if rt["id"] not in target_ids]
 
     def _remote_state(self):
-        """Returns the remote state from AWS"""
+        """Returns the remote state from AWS."""
         description = self.rule.describe()
         if not description:
             return

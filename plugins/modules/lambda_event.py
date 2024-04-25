@@ -166,7 +166,6 @@ def validate_params(module, client):
     :param client: The client used to perform requests to AWS
     :return:
     """
-
     function_name = module.params["lambda_function_arn"]
     qualifier = get_qualifier(module)
 
@@ -208,7 +207,6 @@ def get_qualifier(module):
     :param module:
     :return:
     """
-
     qualifier = None
     if module.params["version"] > 0:
         qualifier = str(module.params["version"])
@@ -235,7 +233,6 @@ def lambda_event_stream(module, client):
     :param aws:
     :return:
     """
-
     facts = dict()
     changed = False
     current_state = "absent"

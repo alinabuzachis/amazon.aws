@@ -259,7 +259,7 @@ from ansible_collections.amazon.aws.plugins.module_utils.tagging import compare_
 
 def get_kms_key_aliases(module, client, keyId):
     """
-    get list of key aliases
+    get list of key aliases.
 
     module : AnsibleAWSModule object
     client : boto3 client connection object for kms
@@ -277,7 +277,7 @@ def get_kms_key_aliases(module, client, keyId):
 
 def create_trail(module, client, ct_params):
     """
-    Creates a CloudTrail
+    Creates a CloudTrail.
 
     module : AnsibleAWSModule object
     client : boto3 client connection object
@@ -294,7 +294,7 @@ def create_trail(module, client, ct_params):
 
 def tag_trail(module, client, tags, trail_arn, curr_tags=None, purge_tags=True):
     """
-    Creates, updates, removes tags on a CloudTrail resource
+    Creates, updates, removes tags on a CloudTrail resource.
 
     module : AnsibleAWSModule object
     client : boto3 client connection object
@@ -303,7 +303,6 @@ def tag_trail(module, client, tags, trail_arn, curr_tags=None, purge_tags=True):
     curr_tags : Dict of the current tags on resource, if any
     dry_run : true/false to determine if changes will be made if needed
     """
-
     if tags is None:
         return False
 
@@ -336,7 +335,7 @@ def tag_trail(module, client, tags, trail_arn, curr_tags=None, purge_tags=True):
 
 def set_logging(module, client, name, action):
     """
-    Starts or stops logging based on given state
+    Starts or stops logging based on given state.
 
     module : AnsibleAWSModule object
     client : boto3 client connection object
@@ -361,7 +360,7 @@ def set_logging(module, client, name, action):
 
 def get_trail_facts(module, client, name):
     """
-    Describes existing trail in an account
+    Describes existing trail in an account.
 
     module : AnsibleAWSModule object
     client : boto3 client connection object
@@ -406,7 +405,7 @@ def get_trail_facts(module, client, name):
 
 def delete_trail(module, client, trail_arn):
     """
-    Delete a CloudTrail
+    Delete a CloudTrail.
 
     module : AnsibleAWSModule object
     client : boto3 client connection object
@@ -420,7 +419,7 @@ def delete_trail(module, client, trail_arn):
 
 def update_trail(module, client, ct_params):
     """
-    Delete a CloudTrail
+    Delete a CloudTrail.
 
     module : AnsibleAWSModule object
     client : boto3 client connection object
