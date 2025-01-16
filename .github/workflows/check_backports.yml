@@ -17,20 +17,15 @@ jobs:
         id: check_comments
         shell: bash
         run: |
-          # Fetch PR comments and check if Patchback Bot commented and if it mentions a failure
-          comment=$(gh pr view "$PR_NUMBER" -R "$REPO" --comments --json author,body -q '.comments[] | select(.author.login == "patchback" and .body | contains("💔 cherry-picking failed"))')
+          # Check if the comment exists from patchback with the specific failure text
+          comment_exists=$(gh pr view ${{ github.event.pull_request.number }} -R ${{ github.repository }} --json comments --jq '[.comments[] | select(.body and (.body | capture("💔 cherry-picking failed"))) ] | length > 0')
 
-          # Store the result in an output variable
-          if [ -n "$comment" ]; then
-            echo "::set-output name=failure_detected::true"
-          else
-            echo "::set-output name=failure_detected::false"
-          fi
-        continue-on-error: true
+          # Output the result directly
+          echo "::set-output name=comment_exists::$comment_exists"
 
       - name: Add Backport Failed Label
-        if: steps.check_comments.outputs.failure_detected == 'true'  # Run only if failure was detected
+        if: steps.check_comment.outputs.comment_exists == 'true'  # Run only if failure was detected
         shell: bash
         run: |
           # Add the backport_failed label
-          gh pr edit ${{ github.event.pull_request.number }} --add-label "backport_failed"
+          gh pr edit ${{ github.event.pull_request.number }} -R ${{ github.repository }} --add-label "backport_failed"
