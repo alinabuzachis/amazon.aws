@@ -10,7 +10,7 @@ jobs:
   check_patchback_comment:
     if: >
       github.event.issue.pull_request.merged == true &&
-      test(github.event.comment.body, '💔 cherry-picking failed')
+      index(github.event.comment.body, '💔 cherry-picking failed') != null
     runs-on: ubuntu-latest
 
     steps:
