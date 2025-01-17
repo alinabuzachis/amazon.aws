@@ -9,8 +9,8 @@ jobs:
   check_patchback_comment:
     if: >
       github.event.issue.pull_request.merged == true &&
-      github.event.comment.user.login == 'patchback' &&
-      contains(github.event.comment.body, '💔 cherry-picking failed')
+      issue_comment.comment.user.login == 'patchback' &&
+      contains(issue_comment.comment.body, '💔 cherry-picking failed')
     runs-on: ubuntu-latest
 
     steps:
