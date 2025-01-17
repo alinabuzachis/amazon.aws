@@ -9,10 +9,10 @@ jobs:
   check_patchback_comment:
     if: >
       github.event.issue.pull_request.merged == true &&
-      contains(github.event.issue_comment.comment.body, '💔 cherry-picking failed')
     runs-on: ubuntu-latest
 
     steps:
       - name: Add Label for Backport Failure
         run: |
+          echo ${{ github.event.issue_comment.comment }}
           gh pr edit ${{ github.event.issue.number }} -R ${{ github.repository }} --add-label 'backport-failed'
