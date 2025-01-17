@@ -18,3 +18,5 @@ jobs:
       - name: Add Label for Backport Failure
         run: |
           gh pr edit ${{ github.event.issue.number }} -R ${{ github.repository }} --add-label 'backport-failed'
+        env:
+          GH_TOKEN: ${{ github.token }}
