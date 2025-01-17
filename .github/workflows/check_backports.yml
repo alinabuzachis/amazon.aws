@@ -10,7 +10,6 @@ jobs:
   check_patchback_comment:
     if: >
       github.event.action == 'closed' &&
-      github.event.pull_request.merged == true &&
       contains(github.event.comment.body, '💔 cherry-picking failed')
     runs-on: ubuntu-latest
 
