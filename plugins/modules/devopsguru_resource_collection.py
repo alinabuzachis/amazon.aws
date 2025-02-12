@@ -34,7 +34,7 @@ options:
             - Required when O(state=present).
         type: list
         elements: dict
-        contains:
+        suboptions:
             app_boundary_key:
                 description:
                     - An Amazon Web Services tag key that is used to identify the Amazon Web Services resources that DevOps
@@ -237,33 +237,33 @@ def main() -> None:
         resource_collection = _get_resource_collection(client, module)
         if resource_collection:
             if stack_names is not None and resource_collection.get("CloudFormation", {}).get("StackNames", []):
-                    if set(stack_names).issubset(set(resource_collection["CloudFormation"]["StackNames"])):
-                        if state == "absent":
-                            changed = True
-                            params["Action"] = "REMOVE"
-                            params["ResourceCollection"]["CloudFormation"] = {"StackNames": stack_names}
-                            update_resource_collection(client, **params)
-                        if stack_names == [] and state == "absent":
-                            changed = True
-                            params["Action"] = "REMOVE"
-                            params["ResourceCollection"]["CloudFormation"] = {"StackNames": resource_collection["CloudFormation"]["StackNames"]}
-                            update_resource_collection(client, **params)
-                    else:
-                        if state == "present":
-                            changed = True
-                            params["Action"] = "ADD"
-                            params["ResourceCollection"]["CloudFormation"] = {"StackNames": stack_names}
-                            update_resource_collection(client, **params)
-            elif tags is not None and resource_collection.get("Tags", []):
-                    update, updated_tags = update_tags(resource_collection["Tags"], tags, state='present')
-                    if update:
+                if set(stack_names).issubset(set(resource_collection["CloudFormation"]["StackNames"])):
+                    if state == "absent":
                         changed = True
-                        if state == "present":
-                            params["Action"] = "ADD"
-                        else:
-                            params["Action"] = "REMOVE"
-                        params["ResourceCollection"]["Tags"] = updated_tags
+                        params["Action"] = "REMOVE"
+                        params["ResourceCollection"]["CloudFormation"] = {"StackNames": stack_names}
                         update_resource_collection(client, **params)
+                    if stack_names == [] and state == "absent":
+                        changed = True
+                        params["Action"] = "REMOVE"
+                        params["ResourceCollection"]["CloudFormation"] = {"StackNames": resource_collection["CloudFormation"]["StackNames"]}
+                        update_resource_collection(client, **params)
+                else:
+                    if state == "present":
+                        changed = True
+                        params["Action"] = "ADD"
+                        params["ResourceCollection"]["CloudFormation"] = {"StackNames": stack_names}
+                        update_resource_collection(client, **params)
+            elif tags is not None and resource_collection.get("Tags", []):
+                update, updated_tags = update_tags(resource_collection["Tags"], tags, state='present')
+                if update:
+                    changed = True
+                    if state == "present":
+                        params["Action"] = "ADD"
+                    else:
+                        params["Action"] = "REMOVE"
+                    params["ResourceCollection"]["Tags"] = updated_tags
+                    update_resource_collection(client, **params)
         else:
             params["Action"] = "ADD"
             if stack_names:
