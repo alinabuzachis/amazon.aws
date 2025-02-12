@@ -38,6 +38,8 @@ RETURN = r"""
 """
 
 
+from typing import Dict, Any
+
 try:
     import botocore
 except ImportError:
@@ -51,10 +53,11 @@ from ansible_collections.amazon.aws.plugins.module_utils.modules import AnsibleA
 from ansible_collections.amazon.aws.plugins.module_utils.retries import AWSRetry
 
 
-
 @AWSRetry.jittered_backoff(retries=10)
-def _get_resource_collection(client, module):
-    params = {"ResourceCollectionType": module.params.get("resource_collection_type")}
+def _get_resource_collection(client, resource_collection_type: str) -> Dict[str, Any]:
+    """Retrieves a resource collection"""
+    params = {"ResourceCollectionType": resource_collection_type}
+
     try:
         paginator = client.get_paginator("get_resource_collection")
         return paginator.paginate(**params).build_full_result()["ResourceCollection"]
@@ -69,8 +72,7 @@ def main() -> None:
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
-        supports_check_mode=True,
-        required_one_of=[("cloudformation_stack_names", "tags")],
+        supports_check_mode=True
     )
 
     try:
@@ -78,9 +80,11 @@ def main() -> None:
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Failed to connect to AWS.")
 
+    resource_collection_type = module.params["resource_collection_type"]
 
     try:
-        module.exit_json(**camel_dict_to_snake_dict(_get_resource_collection(client, module)))
+        resource_collection = _get_resource_collection(client, resource_collection_type)
+        module.exit_json(**camel_dict_to_snake_dict(resource_collection))
     except AnsibleAWSError as e:
         module.fail_json_aws_error(e)
 

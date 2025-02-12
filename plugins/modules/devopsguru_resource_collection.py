@@ -47,6 +47,45 @@ options:
                 description:
                     - The values in an Amazon Web Services tag collection.
                 type: str
+    notification_channel_config:
+        description:
+            - A NotificationChannelConfig that specifies what type of notification channel to add.
+            - The one supported notification channel is Amazon Simple Notification Service (Amazon SNS).
+        type: dict
+        suboptions:
+            sns:
+                description:
+                    - Information about a notification channel configured in DevOps Guru to send notifications when insights are created.
+                type: dict
+                suboptions:
+                    topic_arn:
+                        description:
+                            - The Amazon Resource Name (ARN) of an Amazon Simple Notification Service topic.
+                        type: str
+            filters:
+                description:
+                    - The filter configurations for the Amazon SNS notification topic you use with DevOps Guru.
+                suboptions:
+                    severities:
+                        description:
+                            - The severity levels that you want to receive notifications for.
+                        type: list
+                        elements: str
+                        choices:
+                            - 'LOW'
+                            - 'MEDIUM
+                            - 'HIGH'
+                    message_types:
+                        description:
+                            - The events that you want to receive notifications for.
+                        type: list
+                        elements: str
+                        choices:
+                            - 'NEW_INSIGHT'
+                            - 'CLOSED_INSIGHT'
+                            - 'NEW_ASSOCIATION'
+                            - 'SEVERITY_UPGRADED'
+                            - 'NEW_RECOMMENDATION'
 extends_documentation_fragment:
     - amazon.aws.common.modules
     - amazon.aws.region.modules
@@ -85,6 +124,8 @@ RETURN = r"""
 """
 
 
+from typing import Dict, Any, List, Tuple
+
 try:
     import botocore
 except ImportError:
@@ -98,52 +139,7 @@ from ansible_collections.amazon.aws.plugins.module_utils.modules import AnsibleA
 from ansible_collections.amazon.aws.plugins.module_utils.retries import AWSRetry
 
 
-# def update_tags(current_tags, new_tags, state='present'):
-#     """
-#     Updates the tags list by adding, updating, or removing tags and TagValues based on the state.
-
-#     :param current_tags: The existing list of tags to update.
-#     :param new_tags: The list of new tags to process.
-#     :param state: Determines whether to add ("present") or remove ("absent") tags.
-#     :return: A dictionary with 'update' (bool) and 'tags' (new updated list of tags).
-#     """
-#     updated_tags = current_tags
-#     update = False
-
-#     for new_tag in new_tags:
-#         app_boundary_key = new_tag.get('app_boundary_key')
-#         new_tag_values = new_tag.get('tag_values', [])
-
-#         # Find the tag with the same AppBoundaryKey
-#         matching_tag = next((tag for tag in updated_tags if tag.get('AppBoundaryKey') == app_boundary_key), None)
-
-#         if state == 'present':
-#             if matching_tag:
-#                 # Add missing TagValues
-#                 added_values = [value for value in new_tag_values if value not in matching_tag['TagValues']]
-#                 if added_values:
-#                     matching_tag['TagValues'].extend(added_values)
-#                     update = True
-#             else:
-#                 # Add a new tag
-#                 updated_tags.append({'AppBoundaryKey': app_boundary_key, 'TagValues': new_tag_values})
-#                 update = True
-
-#         elif state == 'absent' and matching_tag:
-#             # Remove TagValues
-#             updated_tag_values = [value for value in matching_tag['TagValues'] if value not in new_tag_values]
-#             if updated_tag_values != matching_tag['TagValues']:
-#                 matching_tag['TagValues'] = updated_tag_values
-#                 update = True
-
-#             # Remove the tag if no TagValues remain
-#             if not matching_tag['TagValues']:
-#                 updated_tags = [tag for tag in updated_tags if tag.get('AppBoundaryKey') != app_boundary_key]
-#                 update = True
-
-#     return update, updated_tags
-
-def update_tags(current_tags, new_tags, state='present'):
+def update_tags(current_tags: List[Dict[str, Any]], new_tags: List[Dict[str, Any]], state: str = 'present') -> Tuple[bool, List[Dict[str, Any]]]:
     """
     Updates the tags list by adding, updating, or removing tags and TagValues based on the state.
 
@@ -152,7 +148,7 @@ def update_tags(current_tags, new_tags, state='present'):
     :param state: Determines whether to add ("present") or remove ("absent") tags.
     :return: A dictionary with 'update' (bool) and 'tags' (new updated list of tags).
     """
-    updated_tags = current_tags
+    updated_tags = current_tags[:]
     update = False
 
     for new_tag in new_tags:
@@ -189,7 +185,7 @@ def update_tags(current_tags, new_tags, state='present'):
 
 
 @AWSRetry.jittered_backoff(retries=10)
-def _get_resource_collection(client, module):
+def _get_resource_collection(client, module) ->  Dict[str, Any]:
     stack_names = module.params.get("cloudformation_stack_names")
     tags = module.params.get("tags")
     params = {}
@@ -205,8 +201,12 @@ def _get_resource_collection(client, module):
         return {}
 
 
-def update_resource_collection(client, **params):
+def update_resource_collection(client, **params) -> Dict[str, Any]:
     return client.update_resource_collection(**params)
+
+
+def add_notification_channel(client, config: Dict[str, Any]):
+    client.add_notification_channel({"Config": config})
 
 
 def main() -> None:
@@ -214,6 +214,7 @@ def main() -> None:
         state=dict(required=True, choices=["present", "absent"]),
         cloudformation_stack_names=dict(type="list", elements="str", aliases=[""]),
         tags=dict(type="list", elements="dict"),
+        notification_channel_config=dict(type="dict"),
     )
 
     module = AnsibleAWSModule(
@@ -231,6 +232,7 @@ def main() -> None:
     state = module.params.get("state")
     stack_names = module.params.get("cloudformation_stack_names")
     tags = module.params.get("tags")
+    notification_channel_config = module.params.get("notification_channel_config")
     params = {"ResourceCollection": {}}
 
     try:
@@ -272,6 +274,9 @@ def main() -> None:
                 params["ResourceCollection"]["Tags"] = tags
             changed = True
             update_resource_collection(client, **params)
+
+        if notification_channel_config:
+            add_notification_channel(client, notification_channel_config)
 
     except AnsibleAWSError as e:
         module.fail_json_aws_error(e)

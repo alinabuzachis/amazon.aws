@@ -39,11 +39,11 @@ options:
                     from_time:
                         description:
                             - The ID of the insight.
-                        type: dict
+                        type: str
                     to_time:
                         description:
                             - The ID of the insight.
-                        type: dict
+                        type: str
             filters:
                 description:
                     - Specifies one or more service names that are used to list anomalies.
@@ -141,20 +141,9 @@ from ansible_collections.amazon.aws.plugins.module_utils.retries import AWSRetry
 
 
 @AWSRetry.jittered_backoff(retries=10)
-def _list_insights(client, **params) -> Dict[str, Any]:
-    paginator = client.get_paginator('list_insights')
-    return paginator.paginate(**params).build_full_result()
-
-
-@AWSRetry.jittered_backoff(retries=10)
-def _list_anomalies_for_insight(client, **params) -> Dict[str, Any]:
-    paginator = client.get_paginator('list_anomalies_for_insight')
-    return paginator.paginate(**params).build_full_result()
-
-
-@AWSRetry.jittered_backoff(retries=10)
-def _list_recommendations(client, **params) -> Dict[str, Any]:
-    paginator = client.get_paginator('list_recommendations')
+def _fetch_data(client, api_call: str, **params: Dict[str, Any]) -> Dict[str, Any]:
+    """Generic function to fetch data using paginators."""
+    paginator = client.get_paginator(api_call)
     return paginator.paginate(**params).build_full_result()
 
 
@@ -184,6 +173,24 @@ def merge_data(target: Union[Dict[str, Any], List[Dict[str, Any]]], source: Dict
             item.update(source)
 
 
+# @AWSRetry.jittered_backoff(retries=10)
+# def _list_insights(client, **params) -> Dict[str, Any]:
+#     paginator = client.get_paginator('list_insights')
+#     return paginator.paginate(**params).build_full_result()
+
+
+# @AWSRetry.jittered_backoff(retries=10)
+# def _list_anomalies_for_insight(client, **params) -> Dict[str, Any]:
+#     paginator = client.get_paginator('list_anomalies_for_insight')
+#     return paginator.paginate(**params).build_full_result()
+
+
+# @AWSRetry.jittered_backoff(retries=10)
+# def _list_recommendations(client, **params) -> Dict[str, Any]:
+#     paginator = client.get_paginator('list_recommendations')
+#     return paginator.paginate(**params).build_full_result()
+
+
 def main() -> None:
     argument_spec = dict(
         status_filter=dict(type="dict"),
@@ -210,10 +217,7 @@ def main() -> None:
     include_recommendations = module.params.get("include_recommendations")
 
     try:
-        if insight_id:
-            insight_info = describe_insight(client, insight_id, account_id)
-        else:
-            insight_info = _list_insights(client, **{"StatusFilter": status_filter})
+        insight_info = describe_insight(client, insight_id, account_id) if insight_id else _fetch_data(client, "list_insights", StatusFilter=status_filter)
 
         insight_type = get_insight_type(insight_info)
 
@@ -228,22 +232,23 @@ def main() -> None:
                     params = {}
                     if account_id:
                         params["AccountId"] = account_id
-                    if data_type == "anomalies" and include_flag.get("filters"):
-                        params["Filters"] = include_flag["filters"]
-                    if data_type == "anomalies" and include_flag.get("start_time_range"):
-                        params["StartTimeRange"] = include_flag["start_time_range"]
-                    if data_type == "recommendations" and include_flag.get("locale"):
+
+                    if data_type == "anomalies":
+                        if include_flag.get("filters"):
+                            params["Filters"] = include_flag["filters"]
+                        if include_flag.get("start_time_range"):
+                            params["StartTimeRange"] = include_flag["start_time_range"]
+
+                    if data_type == "recommendations":
                         params["Locale"] = include_flag["locale"]
-                    elif data_type == "recommendations":
-                        module.fail_json(msg=f"Missing parameter in {data_type}")
 
                     if isinstance(insight_info[insight_type], dict):
-                        params["Id"] = insight_info[insight_type]["Id"]
+                        params["InsightId"] = insight_info[insight_type]["Id"]
                         fetched_data = globals()[fetch_func](client, api_call, **params)
                         merge_data(insight_info[insight_type], fetched_data)
                     elif isinstance(insight_info[insight_type], list):
                         for insight in insight_info[insight_type]:
-                            params["Id"] = insight["Id"]
+                            params["InsightId"] = insight["Id"]
                             fetched_data = globals()[fetch_func](client, api_call, **params)
                             merge_data(insight, fetched_data)
 
