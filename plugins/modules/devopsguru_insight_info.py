@@ -106,7 +106,6 @@ options:
                     - 'PT_BR'
                     - 'ZH_CN'
                     - 'ZH_TW'
-                default: "EN_US"
 
 extends_documentation_fragment:
     - amazon.aws.common.modules
@@ -118,7 +117,14 @@ author:
 
 
 EXAMPLES = r"""
-
+- name: Gather information about DevOpsGuru Resource Insights
+  amazon.aws.devopsguru_insight_info:
+    status_filter:
+    Any:
+        Type: 'REACTIVE'
+    StartTimeRange:
+        FromTime: "2025-02-10"
+        ToTime: "2025-02-12"
 """
 
 RETURN = r"""
@@ -127,6 +133,7 @@ RETURN = r"""
 
 
 from typing import Dict, Any, List, Union
+from datetime import datetime
 
 try:
     import botocore
@@ -173,24 +180,6 @@ def merge_data(target: Union[Dict[str, Any], List[Dict[str, Any]]], source: Dict
             item.update(source)
 
 
-# @AWSRetry.jittered_backoff(retries=10)
-# def _list_insights(client, **params) -> Dict[str, Any]:
-#     paginator = client.get_paginator('list_insights')
-#     return paginator.paginate(**params).build_full_result()
-
-
-# @AWSRetry.jittered_backoff(retries=10)
-# def _list_anomalies_for_insight(client, **params) -> Dict[str, Any]:
-#     paginator = client.get_paginator('list_anomalies_for_insight')
-#     return paginator.paginate(**params).build_full_result()
-
-
-# @AWSRetry.jittered_backoff(retries=10)
-# def _list_recommendations(client, **params) -> Dict[str, Any]:
-#     paginator = client.get_paginator('list_recommendations')
-#     return paginator.paginate(**params).build_full_result()
-
-
 def main() -> None:
     argument_spec = dict(
         status_filter=dict(type="dict"),
@@ -203,6 +192,7 @@ def main() -> None:
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_one_of=[("status_filter", "insight_id")],
     )
 
     try:
@@ -235,7 +225,7 @@ def main() -> None:
 
                     if data_type == "anomalies":
                         if include_flag.get("filters"):
-                            params["Filters"] = include_flag["filters"]
+                            params["Filters"] = {"ServiceCollection": {"ServiceNames": include_flag["filters"]["service_collectiion"]["service_names"]}}
                         if include_flag.get("start_time_range"):
                             params["StartTimeRange"] = include_flag["start_time_range"]
 
@@ -252,7 +242,7 @@ def main() -> None:
                             fetched_data = globals()[fetch_func](client, api_call, **params)
                             merge_data(insight, fetched_data)
 
-            module.exit_json(**camel_dict_to_snake_dict(insight_info))
+        module.exit_json(**camel_dict_to_snake_dict(insight_info))
 
     except AnsibleAWSError as e:
         module.fail_json_aws_error(e)

@@ -30,7 +30,9 @@ author:
 """
 
 EXAMPLES = r"""
-
+- name: Gather information about DevOpsGuru Resource Collections
+  amazon.aws.devopsguru_resource_collection_info:
+    resource_collection_type: "AWS_CLOUD_FORMATION"
 """
 
 RETURN = r"""

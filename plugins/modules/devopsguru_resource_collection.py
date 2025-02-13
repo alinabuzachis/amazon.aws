@@ -209,6 +209,11 @@ def add_notification_channel(client, config: Dict[str, Any]):
     client.add_notification_channel({"Config": config})
 
 
+import logging
+logging.basicConfig(filename = '/tmp/file.log',
+                    level = logging.DEBUG,
+                    format = '%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+
 def main() -> None:
     argument_spec = dict(
         state=dict(required=True, choices=["present", "absent"]),
@@ -237,7 +242,7 @@ def main() -> None:
 
     try:
         resource_collection = _get_resource_collection(client, module)
-        if resource_collection:
+        if resource_collection and (resource_collection.get("CloudFormation", {}).get("StackNames", []) or resource_collection.get("Tags", [])):
             if stack_names is not None and resource_collection.get("CloudFormation", {}).get("StackNames", []):
                 if set(stack_names).issubset(set(resource_collection["CloudFormation"]["StackNames"])):
                     if state == "absent":
