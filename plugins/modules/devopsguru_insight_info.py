@@ -120,16 +120,37 @@ EXAMPLES = r"""
 - name: Gather information about DevOpsGuru Resource Insights
   amazon.aws.devopsguru_insight_info:
     status_filter:
-    Any:
-        Type: 'REACTIVE'
-    StartTimeRange:
-        FromTime: "2025-02-10"
-        ToTime: "2025-02-12"
+        Any:
+            Type: 'REACTIVE'
+            StartTimeRange:
+                FromTime: "2025-02-10"
+                ToTime: "2025-02-12"
+
+- name: Gather information about DevOpsGuru Resource Insights including recommendations and anomalies
+    amazon.aws.devopsguru_insight_info:
+        status_filter:
+            Closed:
+                Type: 'REACTIVE'
+                EndTimeRange:
+                    FromTime: "2025-03-04"
+                    ToTime: "2025-03-06"
+        include_recommendations:
+            locale: EN_US
+        include_anomalies:
+            filters:
+            service_collection:
+                service_names:
+                - RDS
 """
 
 RETURN = r"""
 
 """
+
+import logging
+logging.basicConfig(filename = '/tmp/file.log',
+                    level = logging.DEBUG,
+                    format = '%(asctime)s:%(levelname)s:%(name)s:%(message)s')
 
 
 from typing import Dict, Any, List, Union
@@ -163,7 +184,7 @@ def describe_insight(client, insight_id: str, account_id: str = None) -> Dict[st
 
 
 def get_insight_type(data: Dict[str, Any]) -> Union[str, None]:
-    possible_keys = ["ProactiveInsight", "ReactiveveInsight", "ProactiveInsights", "ReactiveveInsights"]
+    possible_keys = ["ProactiveInsight", "ReactiveInsight", "ProactiveInsights", "ReactiveInsights"]
     try:
         key = next(key for key in possible_keys if key in data)
         return key
@@ -178,6 +199,29 @@ def merge_data(target: Union[Dict[str, Any], List[Dict[str, Any]]], source: Dict
     elif isinstance(target, list):
         for item in target:
             item.update(source)
+
+
+def convert_time_ranges(status_filter):
+    """Convert FromTime and ToTime to datetime objects for time ranges."""
+    def convert_time(date_str, set_midnight=False):
+        """Helper function to convert date string to datetime, optionally set to midnight."""
+        dt = datetime.strptime(date_str, "%Y-%m-%d")
+        if set_midnight:
+            dt = dt.replace(hour=0, minute=0, second=0)
+        return dt
+
+    for key in status_filter:
+        if isinstance(status_filter[key], dict):
+            for time_range_key in ["EndTimeRange", "start_time_range"]:
+                if time_range_key in status_filter[key]:
+                    for time_key in ["FromTime", "ToTime", "from_time", "to_time"]:
+                        if time_key in status_filter[key][time_range_key]:
+                            # Determine if "ToTime"/"to_time" should have midnight set
+                            set_midnight = (time_key.lower() == "to_time" or time_key.lower() == "to_time")
+                            status_filter[key][time_range_key][time_key] = convert_time(
+                                status_filter[key][time_range_key][time_key],
+                                set_midnight
+                            )
 
 
 def main() -> None:
@@ -206,10 +250,22 @@ def main() -> None:
     include_anomalies = module.params.get("include_anomalies")
     include_recommendations = module.params.get("include_recommendations")
 
+    logging.debug(f"Before conversion: {status_filter}")
+
+    if status_filter:
+        convert_time_ranges(status_filter)
+
+    logging.debug(f"status_filter: {status_filter}")
+
+    logging.debug(f"After conversion: {status_filter}")
+
     try:
         insight_info = describe_insight(client, insight_id, account_id) if insight_id else _fetch_data(client, "list_insights", StatusFilter=status_filter)
+        logging.debug(f"INSIGHTINFO:{ insight_info }")
 
         insight_type = get_insight_type(insight_info)
+
+        logging.debug(f"INSIGHTTYPE:{ insight_type }")
 
         if insight_type:
             data_to_fetch = {
@@ -225,7 +281,7 @@ def main() -> None:
 
                     if data_type == "anomalies":
                         if include_flag.get("filters"):
-                            params["Filters"] = {"ServiceCollection": {"ServiceNames": include_flag["filters"]["service_collectiion"]["service_names"]}}
+                            params["Filters"] = {"ServiceCollection": {"ServiceNames": include_flag["filters"]["service_collection"]["service_names"]}}
                         if include_flag.get("start_time_range"):
                             params["StartTimeRange"] = include_flag["start_time_range"]
 

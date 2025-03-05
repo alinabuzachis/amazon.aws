@@ -53,20 +53,20 @@ options:
             - The one supported notification channel is Amazon Simple Notification Service (Amazon SNS).
         type: dict
         suboptions:
-            sns:
+            Sns:
                 description:
                     - Information about a notification channel configured in DevOps Guru to send notifications when insights are created.
                 type: dict
                 suboptions:
-                    topic_arn:
+                    TopicArn:
                         description:
                             - The Amazon Resource Name (ARN) of an Amazon Simple Notification Service topic.
                         type: str
-            filters:
+            Filters:
                 description:
                     - The filter configurations for the Amazon SNS notification topic you use with DevOps Guru.
                 suboptions:
-                    severities:
+                    Severities:
                         description:
                             - The severity levels that you want to receive notifications for.
                         type: list
@@ -75,7 +75,7 @@ options:
                             - 'LOW'
                             - 'MEDIUM
                             - 'HIGH'
-                    message_types:
+                    MessageTypes:
                         description:
                             - The events that you want to receive notifications for.
                         type: list
@@ -133,6 +133,7 @@ except ImportError:
 
 
 from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
+
 from ansible_collections.amazon.aws.plugins.module_utils.botocore import is_boto3_error_code
 from ansible_collections.amazon.aws.plugins.module_utils.exceptions import AnsibleAWSError
 from ansible_collections.amazon.aws.plugins.module_utils.modules import AnsibleAWSModule
@@ -206,7 +207,7 @@ def update_resource_collection(client, **params) -> Dict[str, Any]:
 
 
 def add_notification_channel(client, config: Dict[str, Any]):
-    client.add_notification_channel({"Config": config})
+    client.add_notification_channel(**{"Config": config})
 
 
 import logging
