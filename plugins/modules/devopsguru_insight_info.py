@@ -7,7 +7,7 @@
 DOCUMENTATION = r"""
 module: devopsguru_insight_info
 short_description: Fetches information about DevOps Guru insights
-version_added: 9.2.0
+version_added: 9.3.0
 description:
     - Fetches information about DevOps Guru insights.
 options:
@@ -28,21 +28,22 @@ options:
         type: str
     include_anomalies:
         description:
-            - The ID of the insight.
+            - Dictionary for getting insight's anomalies.
         type: dict
         suboptions:
             start_time_range:
                 description:
-                    - The ID of the insight.
+                    - A time range used to specify when the requested anomalies started.
+                    - All returned anomalies started during this time range.
                 type: dict
                 suboptions:
                     from_time:
                         description:
-                            - The ID of the insight.
+                            - The start time of the time range.
                         type: str
                     to_time:
                         description:
-                            - The ID of the insight.
+                            - The end time of the time range.
                         type: str
             filters:
                 description:
@@ -141,16 +142,22 @@ EXAMPLES = r"""
             service_collection:
                 service_names:
                 - RDS
+
+- name: Gather information about a specific DevOpsGuru Insight
+  amazon.aws.devopsguru_insight_info:
+    insight_id: "{{ insight_id }}"
+    include_recommendations:
+        locale: EN_US
+    include_anomalies:
+        filters:
+        service_collection:
+            service_names:
+                - RDS
 """
 
 RETURN = r"""
 
 """
-
-import logging
-logging.basicConfig(filename = '/tmp/file.log',
-                    level = logging.DEBUG,
-                    format = '%(asctime)s:%(levelname)s:%(name)s:%(message)s')
 
 
 from typing import Dict, Any, List, Union
@@ -250,23 +257,12 @@ def main() -> None:
     include_anomalies = module.params.get("include_anomalies")
     include_recommendations = module.params.get("include_recommendations")
 
-    logging.debug(f"Before conversion: {status_filter}")
-
     if status_filter:
         convert_time_ranges(status_filter)
 
-    logging.debug(f"status_filter: {status_filter}")
-
-    logging.debug(f"After conversion: {status_filter}")
-
     try:
         insight_info = describe_insight(client, insight_id, account_id) if insight_id else _fetch_data(client, "list_insights", StatusFilter=status_filter)
-        logging.debug(f"INSIGHTINFO:{ insight_info }")
-
         insight_type = get_insight_type(insight_info)
-
-        logging.debug(f"INSIGHTTYPE:{ insight_type }")
-
         if insight_type:
             data_to_fetch = {
                 "anomalies": (include_anomalies, "_fetch_data", "list_anomalies_for_insight"),

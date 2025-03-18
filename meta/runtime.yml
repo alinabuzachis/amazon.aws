@@ -32,6 +32,9 @@ action_groups:
     - cloudwatchlogs_log_group
     - cloudwatchlogs_log_group_info
     - cloudwatchlogs_log_group_metric_filter
+    - devopsguru_resource_collection
+    - devopsguru_resource_collection_info
+    - devopsguru_insight_info
     - ec2_ami
     - ec2_ami_info
     - ec2_eip
@@ -147,7 +150,6 @@ action_groups:
     - s3_object
     - s3_object_info
     - sts_assume_role
-    - devopsguru_resource_collection
 plugin_routing:
   action:
     aws_s3:

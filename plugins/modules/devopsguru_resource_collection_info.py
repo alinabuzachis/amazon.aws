@@ -7,7 +7,7 @@
 DOCUMENTATION = r"""
 module: devopsguru_resource_collection_info
 short_description: Fetches information about a DevOps Guru resource collection
-version_added: 9.2.0
+version_added: 9.3.0
 description:
     - Manages DevOps Guru resource collections.
 options:
