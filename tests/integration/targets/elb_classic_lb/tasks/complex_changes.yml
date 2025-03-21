@@ -10,7 +10,7 @@
         wait: true
         scheme: internal
         subnets: ["{{ subnet_a }}", "{{ subnet_b }}"]
-        security_group_names: ["{{ resource_prefix }}-a", "{{ resource_prefix }}-b"]
+        security_group_names: ["{{ sg_a }}", "{{ sg_b }}"] #["{{ resource_prefix }}-a", "{{ resource_prefix }}-b"]
         tags: "{{ default_tags }}"
         cross_az_load_balancing: true
         idle_timeout: "{{ default_idle_timeout }}"
@@ -38,7 +38,7 @@
         wait: true
         scheme: internal
         subnets: ["{{ subnet_a }}", "{{ subnet_b }}"]
-        security_group_names: ["{{ resource_prefix }}-a", "{{ resource_prefix }}-b"]
+        security_group_names: ["{{ sg_a }}", "{{ sg_b }}"] #["{{ resource_prefix }}-a", "{{ resource_prefix }}-b"]
         tags: "{{ default_tags }}"
         cross_az_load_balancing: true
         idle_timeout: "{{ default_idle_timeout }}"
@@ -89,7 +89,7 @@
         wait: true
         scheme: internal
         subnets: ["{{ subnet_a }}", "{{ subnet_b }}"]
-        security_group_names: ["{{ resource_prefix }}-a", "{{ resource_prefix }}-b"]
+        security_group_names: ["{{ sg_a }}", "{{ sg_b }}"] #["{{ resource_prefix }}-a", "{{ resource_prefix }}-b"]
         tags: "{{ default_tags }}"
         cross_az_load_balancing: true
         idle_timeout: "{{ default_idle_timeout }}"
@@ -117,7 +117,7 @@
         wait: true
         scheme: internal
         subnets: ["{{ subnet_a }}", "{{ subnet_b }}"]
-        security_group_names: ["{{ resource_prefix }}-a", "{{ resource_prefix }}-b"]
+        security_group_names: ["{{ sg_a }}", "{{ sg_b }}"] #["{{ resource_prefix }}-a", "{{ resource_prefix }}-b"]
         tags: "{{ default_tags }}"
         cross_az_load_balancing: true
         idle_timeout: "{{ default_idle_timeout }}"
@@ -170,7 +170,7 @@
         wait: true
         scheme: internal
         subnets: ["{{ subnet_a }}", "{{ subnet_b }}"]
-        security_group_names: ["{{ resource_prefix }}-c", "{{ resource_prefix }}-b"]
+        security_group_names: ["{{ sg_a }}", "{{ sg_b }}"] #["{{ resource_prefix }}-c", "{{ resource_prefix }}-b"]
         tags: "{{ updated_tags }}"
         cross_az_load_balancing: false
         idle_timeout: "{{ updated_idle_timeout }}"
@@ -198,7 +198,7 @@
         wait: true
         scheme: internal
         subnets: ["{{ subnet_a }}", "{{ subnet_b }}"]
-        security_group_names: ["{{ resource_prefix }}-c", "{{ resource_prefix }}-b"]
+        security_group_names: ["{{ sg_a }}", "{{ sg_b }}"] #["{{ resource_prefix }}-c", "{{ resource_prefix }}-b"]
         tags: "{{ updated_tags }}"
         cross_az_load_balancing: false
         idle_timeout: "{{ updated_idle_timeout }}"
@@ -249,7 +249,7 @@
         wait: true
         scheme: internal
         subnets: ["{{ subnet_a }}", "{{ subnet_b }}"]
-        security_group_names: ["{{ resource_prefix }}-c", "{{ resource_prefix }}-b"]
+        security_group_names: ["{{ sg_a }}", "{{ sg_b }}"] #["{{ resource_prefix }}-c", "{{ resource_prefix }}-b"]
         tags: "{{ updated_tags }}"
         cross_az_load_balancing: false
         idle_timeout: "{{ updated_idle_timeout }}"
@@ -277,7 +277,7 @@
         wait: true
         scheme: internal
         subnets: ["{{ subnet_a }}", "{{ subnet_b }}"]
-        security_group_names: ["{{ resource_prefix }}-c", "{{ resource_prefix }}-b"]
+        security_group_names: ["{{ sg_a }}", "{{ sg_b }}"] #["{{ resource_prefix }}-c", "{{ resource_prefix }}-b"]
         tags: "{{ updated_tags }}"
         cross_az_load_balancing: false
         idle_timeout: "{{ updated_idle_timeout }}"

@@ -5,15 +5,35 @@
   register: tmpdir
   ignore_errors: true
 
-- name: Empty S3 buckets before deletion
-  community.aws.s3_sync:
-    bucket: "{{ item }}"
-    delete: true
-    file_root: "{{ tmpdir.path }}"
+# - name: Empty S3 buckets before deletion
+#   community.aws.s3_sync:
+#     bucket: "{{ item }}"
+#     delete: true
+#     file_root: "{{ tmpdir.path }}"
+#   ignore_errors: true
+#   loop:
+#     - "{{ s3_logging_bucket_a }}"
+#     - "{{ s3_logging_bucket_b }}"
+
+- name: List bucket object
+  amazon.aws.s3_object_info:
+    bucket_name: "{{ item }}"
+  register: objects
   ignore_errors: true
   loop:
     - "{{ s3_logging_bucket_a }}"
     - "{{ s3_logging_bucket_b }}"
+
+- name: Remove objects from bucket
+  amazon.aws.s3_object:
+    bucket: "{{ item }}"
+    mode: delobj
+    object: "{{ obj }}"
+  with_items: "{{ objects.s3_keys }}"
+  loop_control:
+    loop_var: obj
+  when: "'s3_keys' in objects"
+  ignore_errors: true
 
 - name: Delete S3 bucket for access logs
   amazon.aws.s3_bucket:

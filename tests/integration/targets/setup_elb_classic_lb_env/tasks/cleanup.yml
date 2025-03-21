@@ -1,0 +1,12 @@
+---
+- name: Cleanup common elb_classic_lb resources
+  module_defaults:
+    group/aws:
+      access_key: "{{ aws_access_key }}"
+      secret_key: "{{ aws_secret_key }}"
+      session_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  block:
+    - ansible.builtin.include_tasks: cleanup_s3.yml
+    - ansible.builtin.include_tasks: cleanup_instances.yml
+    - ansible.builtin.include_tasks: cleanup_vpc.yml

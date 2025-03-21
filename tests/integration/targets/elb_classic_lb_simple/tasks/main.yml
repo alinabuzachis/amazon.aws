@@ -1,0 +1,23 @@
+---
+- module_defaults:
+    group/aws:
+      region: "{{ aws_region }}"
+      access_key: "{{ aws_access_key }}"
+      secret_key: "{{ aws_secret_key }}"
+      session_token: "{{ security_token | default(omit) }}"
+  block:
+    - ansible.builtin.include_tasks: missing_params.yml
+    - ansible.builtin.include_tasks: basic_public.yml
+    - ansible.builtin.include_tasks: basic_internal.yml
+    - ansible.builtin.include_tasks: schema_change.yml
+    - ansible.builtin.include_tasks: https_listeners.yml
+    - ansible.builtin.include_tasks: simple_changes.yml
+
+  always:
+    - name: Remove the test load balancer
+      amazon.aws.elb_classic_lb:
+        name: "{{ elb_name }}"
+        state: absent
+        wait: true
+      register: result
+      ignore_errors: true

@@ -1,0 +1,9 @@
+---
+vpc_cidr: 10.{{ 256 | random(seed=resource_prefix) }}.0.0/16
+subnet_cidr_1: 10.{{ 256 | random(seed=resource_prefix) }}.1.0/24
+subnet_cidr_2: 10.{{ 256 | random(seed=resource_prefix) }}.2.0/24
+subnet_cidr_3: 10.{{ 256 | random(seed=resource_prefix) }}.3.0/24
+subnet_cidr_4: 10.{{ 256 | random(seed=resource_prefix) }}.4.0/24
+
+s3_logging_bucket_a: ansible-test-{{ tiny_prefix }}-a
+s3_logging_bucket_b: ansible-test-{{ tiny_prefix }}-b
