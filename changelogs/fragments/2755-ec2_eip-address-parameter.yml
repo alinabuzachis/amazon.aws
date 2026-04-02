@@ -1,0 +1,2 @@
+minor_changes:
+  - ec2_eip - added ``address`` parameter to allow allocating a specific IP address from a BYOIP pool. This enables users to specify which IP from their pool to allocate rather than having AWS randomly select one (https://github.com/ansible-collections/amazon.aws/issues/2755).

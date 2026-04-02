@@ -76,6 +76,14 @@ options:
       - Allocates the new Elastic IP from the provided public IPv4 pool (BYOIP)
         only applies to newly allocated Elastic IPs, isn't validated when O(reuse_existing_ip_allowed=true).
     type: str
+  address:
+    description:
+      - An IP address from a BYOIP pool that you want to allocate.
+      - Requires O(public_ipv4_pool) to be set.
+      - If you specify an IP address that is already allocated, the module will fail.
+      - Only applies to newly allocated Elastic IPs, is ignored when O(reuse_existing_ip_allowed=true).
+    type: str
+    version_added: 11.3.0
   domain_name:
     description: The domain name to attach to the IP address.
     required: false
@@ -206,6 +214,13 @@ EXAMPLES = r"""
     tag_name: reserved_for
     tag_value: "{{ inventory_hostname }}"
     public_ipv4_pool: ipv4pool-ec2-0588c9b75a25d1a02
+
+- name: allocate a specific IP from a BYOIP pool
+  amazon.aws.ec2_eip:
+    region: us-east-1
+    in_vpc: true
+    public_ipv4_pool: ipv4pool-ec2-0588c9b75a25d1a02
+    address: 203.0.113.42
 
 - name: create new IP and modify it's reverse DNS record
   amazon.aws.ec2_eip:
@@ -352,7 +367,8 @@ def allocate_address(
     domain: Optional[str],
     reuse_existing_ip_allowed: bool,
     tags: Optional[Dict[str, str]],
-    public_ipv4_pool: Optional[bool] = None,
+    public_ipv4_pool: Optional[str] = None,
+    address: Optional[str] = None,
 ) -> Tuple[Dict[str, str], bool]:
     """Allocate a new elastic IP address (when needed) and return it"""
     if not domain:
@@ -377,12 +393,14 @@ def allocate_address(
     params = {"Domain": domain}
     if public_ipv4_pool:
         params.update({"PublicIpv4Pool": public_ipv4_pool})
+    if address:
+        params.update({"Address": address})
     if tags:
         params["TagSpecifications"] = boto3_tag_specifications(tags, types="elastic-ip")
-    address = None
+    allocated_address = None
     if not check_mode:
-        address = allocate_ip_address(client, **params)
-    return address, True
+        allocated_address = allocate_ip_address(client, **params)
+    return allocated_address, True
 
 
 def find_device(client, device_id: str, is_instance: bool) -> Optional[Dict[str, Any]]:
@@ -472,6 +490,7 @@ def ensure_present(
     reuse_existing_ip_allowed = module.params.get("reuse_existing_ip_allowed")
     allow_reassociation = module.params.get("allow_reassociation")
     public_ipv4_pool = module.params.get("public_ipv4_pool")
+    address_from_pool = module.params.get("address")
     tags = module.params.get("tags")
     purge_tags = module.params.get("purge_tags")
     domain_name = module.params.get("domain_name")
@@ -484,7 +503,14 @@ def ensure_present(
     # Allocate address
     if not address:
         address, changed = allocate_address(
-            client, module.check_mode, search_tags, domain, reuse_existing_ip_allowed, tags, public_ipv4_pool
+            client,
+            module.check_mode,
+            search_tags,
+            domain,
+            reuse_existing_ip_allowed,
+            tags,
+            public_ipv4_pool,
+            address_from_pool,
         )
 
     if domain_name is not None:
@@ -594,6 +620,7 @@ def main():
         tag_name=dict(),
         tag_value=dict(),
         public_ipv4_pool=dict(),
+        address=dict(),
     )
 
     module = AnsibleAWSModule(
@@ -602,6 +629,7 @@ def main():
         required_by={
             "private_ip_address": ["device_id"],
             "tag_value": ["tag_name"],
+            "address": ["public_ipv4_pool"],
         },
     )
 
