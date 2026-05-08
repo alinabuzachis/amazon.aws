@@ -288,6 +288,15 @@ options:
           - If the multi-tenant configuration is enabled during creation of the DB instance, it cannot be modified later.
         type: bool
         version_added: 9.0.0
+    network_type:
+        description:
+          - The network type of the DB instance.
+          - V(IPV4) specifies that the DB instance uses only IPv4 endpoints.
+          - V(DUAL) specifies that the DB instance uses both IPv4 and IPv6 endpoints.
+        type: str
+        choices: ['IPV4', 'DUAL']
+        default: 'IPV4'
+        version_added: 11.3.0
     new_db_instance_identifier:
         description:
           - The new DB instance (lowercase) identifier for the DB instance when renaming a DB instance. The identifier must contain
@@ -1657,6 +1666,7 @@ def main():
         monitoring_role_arn=dict(),
         multi_az=dict(type="bool"),
         multi_tenant=dict(type="bool"),
+        network_type=dict(type="str", choices=["IPV4", "DUAL"], default="IPV4"),
         new_db_instance_identifier=dict(aliases=["new_instance_id", "new_id"]),
         option_group_name=dict(),
         performance_insights_kms_key_id=dict(),
